@@ -1,0 +1,152 @@
+[
+  {
+    "month": "2026-01",
+    "department": "Engineering",
+    "headcount": 42
+  },
+  {
+    "month": "2026-01",
+    "department": "Product",
+    "headcount": 18
+  },
+  {
+    "month": "2026-01",
+    "department": "Sales",
+    "headcount": 15
+  },
+  {
+    "month": "2026-01",
+    "department": "Human Resources",
+    "headcount": 8
+  },
+  {
+    "month": "2026-01",
+    "department": "Finance",
+    "headcount": 10
+  },
+  {
+    "month": "2026-02",
+    "department": "Engineering",
+    "headcount": 44
+  },
+  {
+    "month": "2026-02",
+    "department": "Product",
+    "headcount": 19
+  },
+  {
+    "month": "2026-02",
+    "department": "Sales",
+    "headcount": 15
+  },
+  {
+    "month": "2026-02",
+    "department": "Human Resources",
+    "headcount": 8
+  },
+  {
+    "month": "2026-02",
+    "department": "Finance",
+    "headcount": 10
+  },
+  {
+    "month": "2026-03",
+    "department": "Engineering",
+    "headcount": 47
+  },
+  {
+    "month": "2026-03",
+    "department": "Product",
+    "headcount": 21
+  },
+  {
+    "month": "2026-03",
+    "department": "Sales",
+    "headcount": 16
+  },
+  {
+    "month": "2026-03",
+    "department": "Human Resources",
+    "headcount": 9
+  },
+  {
+    "month": "2026-03",
+    "department": "Finance",
+    "headcount": 11
+  },
+  {
+    "month": "2026-04",
+    "department": "Engineering",
+    "headcount": 51
+  },
+  {
+    "month": "2026-04",
+    "department": "Product",
+    "headcount": 22
+  },
+  {
+    "month": "2026-04",
+    "department": "Sales",
+    "headcount": 17
+  },
+  {
+    "month": "2026-04",
+    "department": "Human Resources",
+    "headcount": 9
+  },
+  {
+    "month": "2026-04",
+    "department": "Finance",
+    "headcount": 11
+  },
+  {
+    "month": "2026-05",
+    "department": "Engineering",
+    "headcount": 53
+  },
+  {
+    "month": "2026-05",
+    "department": "Product",
+    "headcount": 23
+  },
+  {
+    "month": "2026-05",
+    "department": "Sales",
+    "headcount": 18
+  },
+  {
+    "month": "2026-05",
+    "department": "Human Resources",
+    "headcount": 10
+  },
+  {
+    "month": "2026-05",
+    "department": "Finance",
+    "headcount": 12
+  },
+  {
+    "month": "2026-06",
+    "department": "Engineering",
+    "headcount": 55
+  },
+  {
+    "month": "2026-06",
+    "department": "Product",
+    "headcount": 24
+  },
+  {
+    "month": "2026-06",
+    "department": "Sales",
+    "headcount": 19
+  },
+  {
+    "month": "2026-06",
+    "department": "Human Resources",
+    "headcount": 10
+  },
+  {
+    "month": "2026-06",
+    "department": "Finance",
+    "headcount": 12
+  }
+]

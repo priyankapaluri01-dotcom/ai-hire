@@ -1,0 +1,23 @@
+
+[
+  {
+    "recruiterId": "R001",
+    "name": "Alex",
+    "role": "RECRUITER"
+  },
+  {
+    "recruiterId": "R002",
+    "name": "Allison",
+    "role": "RECRUITER"
+  },
+  {
+    "recruiterId":"R003",
+    "name":"Anjali",
+    "role":"RECRUITER"
+  },
+  {
+    "recruiterId": "R004",
+    "name": "Arun",
+    "role": "CHRO"
+  }
+]

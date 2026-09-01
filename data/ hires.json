@@ -1,0 +1,162 @@
+[
+  {
+    "hireId": "H001",
+    "jobId": "J001",
+    "department": "Engineering",
+    "jobFamily": "Software Engineering",
+    "band": "B3",
+    "hireDate": "2026-02-20"
+  },
+  {
+    "hireId": "H002",
+    "jobId": "J002",
+    "department": "Engineering",
+    "jobFamily": "Software Engineering",
+    "band": "B3",
+    "hireDate": "2026-02-28"
+  },
+  {
+    "hireId": "H003",
+    "jobId": "J004",
+    "department": "Engineering",
+    "jobFamily": "Data",
+    "band": "B3",
+    "hireDate": "2026-03-19"
+  },
+  {
+    "hireId": "H004",
+    "jobId": "J005",
+    "department": "Engineering",
+    "jobFamily": "Data",
+    "band": "B4",
+    "hireDate": "2026-04-01"
+  },
+  {
+    "hireId": "H005",
+    "jobId": "J007",
+    "department": "Product",
+    "jobFamily": "Product Management",
+    "band": "B4",
+    "hireDate": "2026-03-05"
+  },
+  {
+    "hireId": "H006",
+    "jobId": "J008",
+    "department": "Product",
+    "jobFamily": "Design",
+    "band": "B3",
+    "hireDate": "2026-03-30"
+  },
+  {
+    "hireId": "H007",
+    "jobId": "J010",
+    "department": "Sales",
+    "jobFamily": "Sales",
+    "band": "B2",
+    "hireDate": "2026-03-25"
+  },
+  {
+    "hireId": "H008",
+    "jobId": "J011",
+    "department": "Human Resources",
+    "jobFamily": "Human Resources",
+    "band": "B4",
+    "hireDate": "2026-04-15"
+  },
+  {
+    "hireId": "H009",
+    "jobId": "J001",
+    "department": "Engineering",
+    "jobFamily": "Software Engineering",
+    "band": "B3",
+    "hireDate": "2026-02-20"
+  },
+  {
+    "hireId": "H010",
+    "jobId": "J002",
+    "department": "Engineering",
+    "jobFamily": "Software Engineering",
+    "band": "B3",
+    "hireDate": "2026-02-28"
+  },
+  {
+    "hireId": "H011",
+    "jobId": "J004",
+    "department": "Engineering",
+    "jobFamily": "Data",
+    "band": "B3",
+    "hireDate": "2026-03-19"
+  },
+  {
+    "hireId": "H012",
+    "jobId": "J005",
+    "department": "Engineering",
+    "jobFamily": "Data",
+    "band": "B4",
+    "hireDate": "2026-04-01"
+  },
+  {
+    "hireId": "H013",
+    "jobId": "J007",
+    "department": "Product",
+    "jobFamily": "Product Management",
+    "band": "B4",
+    "hireDate": "2026-03-05"
+  },
+  {
+    "hireId": "H014",
+    "jobId": "J008",
+    "department": "Product",
+    "jobFamily": "Design",
+    "band": "B3",
+    "hireDate": "2026-03-30"
+  },
+  {
+    "hireId": "H015",
+    "jobId": "J010",
+    "department": "Sales",
+    "jobFamily": "Sales",
+    "band": "B2",
+    "hireDate": "2026-03-25"
+  },
+  {
+    "hireId": "H016",
+    "jobId": "J011",
+    "department": "Human Resources",
+    "jobFamily": "Human Resources",
+    "band": "B4",
+    "hireDate": "2026-04-15"
+  },
+  {
+    "hireId": "H017",
+    "jobId": "J001",
+    "department": "Engineering",
+    "jobFamily": "Software Engineering",
+    "band": "B3",
+    "hireDate": "2026-02-20"
+  },
+  {
+    "hireId": "H018",
+    "jobId": "J004",
+    "department": "Engineering",
+    "jobFamily": "Data",
+    "band": "B3",
+    "hireDate": "2026-03-19"
+  },
+  {
+    "hireId": "H019",
+    "jobId": "J007",
+    "department": "Product",
+    "jobFamily": "Product Management",
+    "band": "B4",
+    "hireDate": "2026-03-05"
+  },
+  {
+    "hireId": "H020",
+    "jobId": "J010",
+    "department": "Sales",
+    "jobFamily": "Sales",
+    "band": "B2",
+    "hireDate": "2026-03-25"
+  }
+]
