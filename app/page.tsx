@@ -2,11 +2,45 @@
 
 import { useState } from "react";
 
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 type Role = "RECRUITER" | "CHRO";
 
 type QueryResult =
   | Record<string, unknown>
   | Array<Record<string, unknown>>
+  | null;
+
+type Visualization =
+  | {
+      type: "metric";
+      data: {
+        value: number;
+        label: string;
+      };
+    }
+  | {
+      type: "bar";
+      xKey: string;
+      yKey: string;
+      data: Array<Record<string, unknown>>;
+    }
+  | {
+      type: "pie";
+      nameKey: string;
+      valueKey: string;
+      data: Array<Record<string, unknown>>;
+    }
   | null;
 
 const roleConfig = {
@@ -27,49 +61,100 @@ const suggestions = [
 ];
 
 export default function Home() {
-  const [role, setRole] = useState<Role>("RECRUITER");
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [result, setResult] = useState<QueryResult>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [role, setRole] =
+    useState<Role>("RECRUITER");
 
-  const currentRole = roleConfig[role];
+  const [question, setQuestion] =
+    useState("");
+
+  const [answer, setAnswer] =
+    useState("");
+
+  const [result, setResult] =
+    useState<QueryResult>(null);
+
+  const [visualization, setVisualization] =
+    useState<Visualization>(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const currentRole =
+    roleConfig[role];
+
+  // ----------------------------------
+  // SUGGESTION CLICK
+  // ----------------------------------
+
+  const handleSuggestionClick = (
+    suggestion: string
+  ) => {
+    setQuestion(suggestion);
+    setError("");
+    setAnswer("");
+    setResult(null);
+    setVisualization(null);
+  };
+
+  // ----------------------------------
+  // SUBMIT QUESTION
+  // ----------------------------------
 
   const handleSubmit = async (
     event: React.FormEvent
   ) => {
     event.preventDefault();
 
-    if (!question.trim()) return;
+    if (!question.trim() || loading) {
+      return;
+    }
 
     setLoading(true);
     setError("");
     setAnswer("");
     setResult(null);
+    setVisualization(null);
 
     try {
-      const response = await fetch("/api/query", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: question.trim(),
-          role,
-        }),
-      });
+      const response = await fetch(
+        "/api/query",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            question: question.trim(),
+            role,
+          }),
+        }
+      );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Something went wrong."
+          data.error ||
+            "Something went wrong."
         );
       }
 
-      setAnswer(data.answer);
-      setResult(data.result);
+      setAnswer(
+        data.answer || ""
+      );
+
+      setResult(
+        data.result || null
+      );
+
+      setVisualization(
+        data.visualization || null
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -86,6 +171,7 @@ export default function Home() {
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-6">
 
         {/* HEADER */}
+
         <header className="flex h-20 items-center justify-between border-b border-gray-200">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">
@@ -131,10 +217,13 @@ export default function Home() {
         </header>
 
         {/* MAIN */}
+
         <section className="flex flex-1 flex-col items-center py-16">
 
           {/* HERO */}
+
           <div className="mb-10 max-w-2xl text-center">
+
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-500 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               Synthetic hiring data
@@ -143,6 +232,7 @@ export default function Home() {
             <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
               Your hiring data,
               <br />
+
               <span className="text-gray-400">
                 just ask.
               </span>
@@ -156,7 +246,9 @@ export default function Home() {
           </div>
 
           {/* ACCESS SCOPE */}
+
           <div className="mb-4 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs">
+
             <span className="text-gray-400">
               Access scope:
             </span>
@@ -171,14 +263,18 @@ export default function Home() {
           </div>
 
           {/* QUESTION BOX */}
+
           <form
             onSubmit={handleSubmit}
             className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-2 shadow-sm"
           >
+
             <textarea
               value={question}
               onChange={(event) =>
-                setQuestion(event.target.value)
+                setQuestion(
+                  event.target.value
+                )
               }
               placeholder="Ask a question about your hiring data..."
               rows={3}
@@ -191,35 +287,49 @@ export default function Home() {
                 Read-only · Access enforced server-side
               </span>
 
+              {/* IMPORTANT:
+                  Only loading disables the button.
+                  handleSubmit still validates empty questions.
+              */}
+
               <button
                 type="submit"
-                disabled={
-                  !question.trim() || loading
-                }
-                className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={loading}
+                className="cursor-pointer rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {loading ? "Thinking..." : "Ask →"}
+                {loading
+                  ? "Thinking..."
+                  : "Ask →"}
               </button>
             </div>
           </form>
 
           {/* SUGGESTIONS */}
+
           <div className="mt-6 flex max-w-2xl flex-wrap justify-center gap-2">
-            {suggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() =>
-                  setQuestion(suggestion)
-                }
-                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs text-gray-600 transition hover:border-gray-300 hover:bg-gray-50"
-              >
-                {suggestion}
-              </button>
-            ))}
+
+            {suggestions.map(
+              (suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() =>
+                    handleSuggestionClick(
+                      suggestion
+                    )
+                  }
+                  disabled={loading}
+                  className="cursor-pointer rounded-full border border-gray-200 bg-white px-4 py-2 text-xs text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {suggestion}
+                </button>
+              )
+            )}
+
           </div>
 
           {/* ERROR */}
+
           {error && (
             <div className="mt-8 w-full max-w-2xl rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
               {error}
@@ -227,15 +337,18 @@ export default function Home() {
           )}
 
           {/* ANSWER */}
+
           {answer && !error && (
             <div className="mt-8 w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
 
               <div className="mb-4 flex items-center gap-2">
+
                 <span className="h-2 w-2 rounded-full bg-green-500" />
 
                 <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Answer
                 </span>
+
               </div>
 
               <p className="text-lg font-medium">
@@ -243,14 +356,21 @@ export default function Home() {
               </p>
 
               {/* VISUALIZATION */}
+
               <ResultVisualization
+                visualization={
+                  visualization
+                }
                 result={result}
               />
+
             </div>
           )}
 
           {/* TRUST */}
+
           <div className="mt-12 flex flex-col items-center gap-2 text-center text-xs text-gray-400">
+
             <span>🔒</span>
 
             <span>
@@ -262,151 +382,248 @@ export default function Home() {
               The assistant cannot access data
               outside your permitted scope.
             </span>
+
           </div>
+
         </section>
 
         {/* FOOTER */}
+
         <footer className="flex h-16 items-center justify-center border-t border-gray-200 text-xs text-gray-400">
           AI Hiring Analytics · Read-only · Synthetic Data
         </footer>
+
       </div>
     </main>
   );
 }
-
 
 /* =====================================================
    RESULT VISUALIZATION
 ===================================================== */
 
 function ResultVisualization({
+  visualization,
   result,
 }: {
+  visualization: Visualization;
   result: QueryResult;
 }) {
-  if (!result) return null;
+  if (!result) {
+    return null;
+  }
 
   /* ---------------------------------------------
-     SIMPLE AGGREGATION
+     METRIC
   --------------------------------------------- */
 
   if (
-    !Array.isArray(result) &&
-    typeof result === "object"
+    visualization?.type ===
+    "metric"
   ) {
-    const entries = Object.entries(result);
-
     return (
       <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 p-5">
-        {entries.map(([key, value]) => (
-          <div
-            key={key}
-            className="flex items-end justify-between"
-          >
-            <span className="text-sm capitalize text-gray-500">
-              {key}
-            </span>
 
-            <span className="text-3xl font-semibold">
-              {typeof value === "number"
-                ? Number(value).toFixed(
-                    Number.isInteger(value)
-                      ? 0
-                      : 1
-                  )
-                : String(value)}
-            </span>
-          </div>
-        ))}
+        <div className="flex items-end justify-between">
+
+          <span className="text-sm text-gray-500">
+            {visualization.data.label}
+          </span>
+
+          <span className="text-3xl font-semibold">
+            {visualization.data.value}
+          </span>
+
+        </div>
+
       </div>
     );
   }
 
   /* ---------------------------------------------
-     GROUPED RESULT
+     PIE CHART
   --------------------------------------------- */
 
   if (
-    Array.isArray(result) &&
-    result.length > 0
+    visualization?.type ===
+    "pie"
   ) {
-    const first = result[0];
-
-    const groupField = Object.keys(first).find(
-      (key) =>
-        typeof first[key] === "string"
-    );
-
-    const valueField = Object.keys(first).find(
-      (key) =>
-        typeof first[key] === "number"
-    );
-
-    if (!groupField || !valueField) {
-      return null;
-    }
-
-    const maxValue = Math.max(
-      ...result.map((item) =>
-        Number(item[valueField])
-      )
-    );
-
     return (
       <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 p-5">
 
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-4">
+
+          <h3 className="text-sm font-medium">
+            Department distribution
+          </h3>
+
+          <p className="mt-1 text-xs text-gray-400">
+            Headcount by department
+          </p>
+
+        </div>
+
+        <div className="h-[320px] w-full">
+
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+          >
+            <PieChart>
+
+              <Pie
+                data={
+                  visualization.data
+                }
+                dataKey={
+                  visualization.valueKey
+                }
+                nameKey={
+                  visualization.nameKey
+                }
+                cx="50%"
+                cy="50%"
+                outerRadius={105}
+                label
+              >
+                {visualization.data.map(
+                  (_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                    />
+                  )
+                )}
+              </Pie>
+
+              <Tooltip />
+
+            </PieChart>
+          </ResponsiveContainer>
+
+        </div>
+
+        {/* PIE LEGEND */}
+
+        <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-gray-500">
+
+          {visualization.data.map(
+            (item, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2"
+              >
+
+                <span className="h-2 w-2 rounded-full bg-gray-400" />
+
+                <span>
+                  {String(
+                    item[
+                      visualization.nameKey
+                    ]
+                  )}
+                </span>
+
+                <span className="font-medium text-gray-700">
+                  {String(
+                    item[
+                      visualization.valueKey
+                    ]
+                  )}
+                </span>
+
+              </div>
+            )
+          )}
+
+        </div>
+
+      </div>
+    );
+  }
+
+  /* ---------------------------------------------
+     BAR CHART
+  --------------------------------------------- */
+
+  if (
+    visualization?.type ===
+    "bar"
+  ) {
+    return (
+      <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 p-5">
+
+        <div className="mb-4">
+
           <h3 className="text-sm font-medium">
             Breakdown
           </h3>
 
-          <span className="text-xs text-gray-400">
-            {valueField}
-          </span>
+          <p className="mt-1 text-xs text-gray-400">
+            {visualization.yKey}
+          </p>
+
         </div>
 
-        <div className="space-y-4">
-          {result.map((item, index) => {
-            const label = String(
-              item[groupField]
-            );
+        <div className="h-[300px] w-full">
 
-            const value = Number(
-              item[valueField]
-            );
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+          >
+            <BarChart
+              data={
+                visualization.data
+              }
+              margin={{
+                top: 10,
+                right: 10,
+                left: -10,
+                bottom: 10,
+              }}
+            >
 
-            const width =
-              maxValue > 0
-                ? (value / maxValue) * 100
-                : 0;
+              <XAxis
+                dataKey={
+                  visualization.xKey
+                }
+                tick={{
+                  fontSize: 11,
+                }}
+              />
 
-            return (
-              <div key={index}>
-                <div className="mb-1 flex justify-between text-xs">
-                  <span className="font-medium">
-                    {label}
-                  </span>
+              <YAxis
+                allowDecimals={false}
+                tick={{
+                  fontSize: 11,
+                }}
+              />
 
-                  <span className="text-gray-500">
-                    {value}
-                  </span>
-                </div>
+              <Tooltip />
 
-                <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-black transition-all"
-                    style={{
-                      width: `${width}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              <Bar
+                dataKey={
+                  visualization.yKey
+                }
+                radius={[
+                  4,
+                  4,
+                  0,
+                  0,
+                ]}
+              />
+
+            </BarChart>
+          </ResponsiveContainer>
+
         </div>
+
       </div>
     );
   }
+
+  /* ---------------------------------------------
+     FALLBACK
+  --------------------------------------------- */
 
   return null;
 }

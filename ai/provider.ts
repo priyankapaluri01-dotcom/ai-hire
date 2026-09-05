@@ -1,37 +1,30 @@
-const OLLAMA_URL = "http://127.0.0.1:11434/api/generate";
+import { GoogleGenAI } from "@google/genai";
 
-const MODEL = process.env.OLLAMA_MODEL || "llama3.2";
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  throw new Error("GEMINI_API_KEY is not configured.");
+}
+
+const ai = new GoogleGenAI({
+  apiKey,
+});
 
 export async function generateWithLLM(prompt: string): Promise<string> {
-  const response = await fetch(OLLAMA_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await ai.models.generateContent({
+   model: "gemini-3.6-flash",
+    contents: prompt,
+    config: {
+      temperature: 0,
+      responseMimeType: "application/json",
     },
-    body: JSON.stringify({
-      model: MODEL,
-      prompt,
-      stream: false,
-      format: "json",
-      options: {
-        temperature: 0,
-      },
-    }),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
+  const text = response.text;
 
-    throw new Error(
-      `Ollama request failed: ${response.status} ${errorText}`
-    );
+  if (!text) {
+    throw new Error("Gemini returned an empty response.");
   }
 
-  const data = await response.json();
-
-  if (!data.response) {
-    throw new Error("Ollama returned an empty response.");
-  }
-
-  return data.response;
+  return text;
 }

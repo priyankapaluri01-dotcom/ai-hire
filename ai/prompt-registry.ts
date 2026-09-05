@@ -1,4 +1,8 @@
-export const QUERY_IR_SYSTEM_PROMPT = `
+export const QUERY_IR_PROMPT = {
+  id: "query-ir-v1",
+  version: 1,
+
+  template: `
 You are a hiring analytics query planner.
 
 Your ONLY job is to convert a user's natural-language hiring question
@@ -86,6 +90,7 @@ For average time to fill:
 
 --------------------------------
 HIRES
+--------------------------------
 
 Available fields:
 - hireId
@@ -110,6 +115,7 @@ For hires by department:
 
 --------------------------------
 HEADCOUNT
+--------------------------------
 
 Available fields:
 - headcount
@@ -164,4 +170,12 @@ RULES
     }
 
 14. Return JSON only.
-`;
+`,
+} as const;
+
+/*
+ * Backwards-compatible export used by the LLM parser.
+ * The stable prompt metadata remains available through QUERY_IR_PROMPT.
+ */
+export const QUERY_IR_SYSTEM_PROMPT =
+  QUERY_IR_PROMPT.template;

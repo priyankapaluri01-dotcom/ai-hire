@@ -1,128 +1,91 @@
-import type { QueryIR } from "./schema";
+import { z } from "zod";
+import { queryIRSchema, type QueryIR } from "@/query-ir/schema";
+import { generateWithLLM } from "../ai/provider";
+import { QUERY_IR_SYSTEM_PROMPT } from "../ai/prompt-registry";
 
-export function parseQuestion(question: string): QueryIR {
-  const q = question.toLowerCase().trim();
+const refusalSchema = z.object({
+  type: z.literal("refusal"),
+  reason: z.string(),
+});
 
-  // ----------------------------------
-  // HOW MANY OPEN JOBS
-  // ----------------------------------
-  if (
-    q.includes("open jobs") ||
-    q.includes("open job") ||
-    q.includes("how many open")
-  ) {
-    return {
-      version: "1",
-      entity: "jobs",
-      filters: [
-        {
-          field: "status",
-          operator: "eq",
-          value: "OPEN",
-        },
-      ],
-      aggregation: {
-        function: "count",
-        field: "jobId",
-      },
-      groupBy: [],
-      limit: 50,
-    };
-  }
+const queryResponseSchema = z.object({
+  type: z.literal("query"),
+  query: queryIRSchema,
+});
 
-  // ----------------------------------
-  // HIRES BY DEPARTMENT
-  // ----------------------------------
-  if (
-    q.includes("hires by department") ||
-    q.includes("hiring by department") ||
-    q.includes("hires per department")
-  ) {
-    return {
-      version: "1",
-      entity: "hires",
-      filters: [],
-      aggregation: {
-        function: "count",
-        field: "hireId",
-      },
-      groupBy: ["department"],
-      limit: 50,
-    };
-  }
+const plannerResponseSchema = z.discriminatedUnion("type", [
+  queryResponseSchema,
+  refusalSchema,
+]);
 
-  // ----------------------------------
-  // AVERAGE TIME TO FILL
-  // ----------------------------------
-  if (
-    q.includes("average time-to-fill") ||
-    q.includes("average time to fill") ||
-    q.includes("average time") ||
-    q.includes("avg time")
-  ) {
-    const filters = [];
-
-    if (q.includes("engineering")) {
-      filters.push({
-        field: "department",
-        operator: "eq" as const,
-        value: "Engineering",
-      });
+export type LLMQueryResult =
+  | {
+      type: "query";
+      query: QueryIR;
     }
-
-    if (q.includes("product")) {
-      filters.push({
-        field: "department",
-        operator: "eq" as const,
-        value: "Product",
-      });
-    }
-
-    if (q.includes("sales")) {
-      filters.push({
-        field: "department",
-        operator: "eq" as const,
-        value: "Sales",
-      });
-    }
-
-    return {
-      version: "1",
-      entity: "jobs",
-      filters,
-      aggregation: {
-        function: "avg",
-        field: "timeToFill",
-      },
-      groupBy: [],
-      limit: 50,
+  | {
+      type: "refusal";
+      reason: string;
     };
+
+export async function parseQuestionWithLLM(
+  question: string
+): Promise<LLMQueryResult> {
+  const prompt = `
+${QUERY_IR_SYSTEM_PROMPT}
+
+USER QUESTION:
+${question}
+
+Return ONLY valid JSON.
+
+For a valid hiring analytics question, return:
+
+{
+  "type": "query",
+  "query": {
+    "version": "1",
+    "entity": "jobs",
+    "filters": [],
+    "aggregation": {
+      "function": "count",
+      "field": "jobId"
+    },
+    "groupBy": [],
+    "limit": 50
+  }
+}
+
+For an unrelated or unsupported question, return:
+
+{
+  "type": "refusal",
+  "reason": "The question is outside the available hiring data."
+}
+`;
+
+  const rawResponse = await generateWithLLM(prompt);
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(rawResponse);
+  } catch {
+    throw new Error("LLM returned invalid JSON.");
   }
 
-  // ----------------------------------
-  // HEADCOUNT BY DEPARTMENT
-  // ----------------------------------
-  if (
-    q.includes("headcount") ||
-    q.includes("head count")
-  ) {
-    return {
-      version: "1",
-      entity: "headcount",
-      filters: [],
-      aggregation: {
-        function: "sum",
-        field: "headcount",
-      },
-      groupBy: [],
-      limit: 50,
-    };
+  const result = plannerResponseSchema.safeParse(parsed);
+
+  if (!result.success) {
+    console.error(
+      "Invalid LLM response:",
+      result.error.flatten()
+    );
+
+    throw new Error(
+      "The AI generated an invalid hiring query."
+    );
   }
 
-  // ----------------------------------
-  // FALLBACK
-  // ----------------------------------
-  throw new Error(
-    "I don't understand that question yet. Try asking about open jobs, hires by department, average time-to-fill, or headcount."
-  );
+  return result.data;
 }

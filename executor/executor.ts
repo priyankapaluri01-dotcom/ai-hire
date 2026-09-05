@@ -1,42 +1,133 @@
 import type { QueryIR } from "@/query-ir/schema";
 import type { Dataset } from "./data-loader";
+import type { ScopedQuery } from "./access-control";
+
+type RecordValue = Record<string, unknown>;
+
+type Source = {
+  dataset: string;
+  recordId: string;
+  fields: string[];
+};
+
+type ExecutionResult = {
+  value: unknown;
+  sources: Source[];
+};
 
 export function executeQuery(
-  query: QueryIR,
+  query: QueryIR | ScopedQuery,
   dataset: Dataset
-): unknown {
-  let records: any[] = [...dataset[query.entity]];
+): ExecutionResult {
+  let records = [
+    ...dataset[query.entity],
+  ] as RecordValue[];
 
-  // -----------------------------
-  // 1. FILTER
-  // -----------------------------
+  // --------------------------------------------------
+  // SERVER-SIDE ACCESS CONTROL
+  // --------------------------------------------------
+
+  if (
+    "accessScope" in query &&
+    query.accessScope.type === "RECRUITER"
+  ) {
+    const recruiterId =
+      query.accessScope.recruiterId;
+
+    // Recruiters can only see jobs assigned to them.
+    if (query.entity === "jobs") {
+      records = records.filter(
+        (record) =>
+          record.recruiterId === recruiterId
+      );
+    }
+
+    // Recruiters can only see hires belonging to
+    // jobs assigned to them.
+    if (query.entity === "hires") {
+      const allowedJobIds = new Set(
+        dataset.jobs
+          .filter(
+            (job) =>
+              job.recruiterId ===
+              recruiterId
+          )
+          .map((job) => job.jobId)
+      );
+
+      records = records.filter(
+        (record) =>
+          typeof record.jobId ===
+            "string" &&
+          allowedJobIds.has(
+            record.jobId
+          )
+      );
+    }
+  }
+
+  // --------------------------------------------------
+  // QUERY FILTERS
+  // --------------------------------------------------
+
   for (const filter of query.filters) {
     records = records.filter((record) => {
-      const fieldValue = record[filter.field];
+      const fieldValue =
+        record[filter.field];
 
       switch (filter.operator) {
         case "eq":
-          return fieldValue === filter.value;
+          return (
+            fieldValue ===
+            filter.value
+          );
 
         case "neq":
-          return fieldValue !== filter.value;
+          return (
+            fieldValue !==
+            filter.value
+          );
 
         case "gt":
-          return fieldValue > filter.value;
+          return (
+            compareValues(
+              fieldValue,
+              filter.value
+            ) > 0
+          );
 
         case "gte":
-          return fieldValue >= filter.value;
+          return (
+            compareValues(
+              fieldValue,
+              filter.value
+            ) >= 0
+          );
 
         case "lt":
-          return fieldValue < filter.value;
+          return (
+            compareValues(
+              fieldValue,
+              filter.value
+            ) < 0
+          );
 
         case "lte":
-          return fieldValue <= filter.value;
+          return (
+            compareValues(
+              fieldValue,
+              filter.value
+            ) <= 0
+          );
 
         case "contains":
           return String(fieldValue)
             .toLowerCase()
-            .includes(String(filter.value).toLowerCase());
+            .includes(
+              String(
+                filter.value
+              ).toLowerCase()
+            );
 
         default:
           return false;
@@ -44,82 +135,194 @@ export function executeQuery(
     });
   }
 
-  // -----------------------------
-  // 2. GROUP BY
-  // -----------------------------
+  // --------------------------------------------------
+  // GROUNDED SOURCES
+  // --------------------------------------------------
+
+  const sources =
+    createSources(
+      query.entity,
+      records,
+      query
+    );
+
+  // --------------------------------------------------
+  // GROUP BY
+  // --------------------------------------------------
+
   if (query.groupBy.length > 0) {
-    const groups = new Map<string, any[]>();
+    const groups = new Map<
+      string,
+      RecordValue[]
+    >();
 
     for (const record of records) {
       const key = query.groupBy
-        .map((field) => String(record[field]))
+        .map((field) =>
+          String(record[field])
+        )
         .join("|");
 
       if (!groups.has(key)) {
         groups.set(key, []);
       }
 
-      groups.get(key)!.push(record);
+      groups
+        .get(key)!
+        .push(record);
     }
 
-    return Array.from(groups.entries()).map(([_, group]) => {
-      const result: Record<string, unknown> = {};
+    const groupedResults =
+      Array.from(
+        groups.values()
+      ).map((group) => {
+        const result: Record<
+          string,
+          unknown
+        > = {};
 
-      for (const field of query.groupBy) {
-        result[field] = group[0][field];
-      }
+        for (const field of query.groupBy) {
+          result[field] =
+            group[0][field];
+        }
 
-      result[query.aggregation.function] = aggregate(
-        group,
-        query.aggregation.function,
-        query.aggregation.field
-      );
+        result[
+          query.aggregation.function
+        ] = aggregate(
+          group,
+          query.aggregation.function,
+          query.aggregation.field
+        );
 
-      return result;
-    });
-  }
+        return result;
+      });
 
-  // -----------------------------
-  // 3. AGGREGATION
-  // -----------------------------
-  if (query.aggregation) {
     return {
-      [query.aggregation.function]: aggregate(
-        records,
-        query.aggregation.function,
-        query.aggregation.field
-      ),
+      value: groupedResults,
+      sources,
     };
   }
 
-  // -----------------------------
-  // 4. SORT
-  // -----------------------------
+  // --------------------------------------------------
+  // AGGREGATION
+  // --------------------------------------------------
+
+  if (query.aggregation) {
+    return {
+      value: {
+        [query.aggregation.function]:
+          aggregate(
+            records,
+            query.aggregation.function,
+            query.aggregation.field
+          ),
+      },
+      sources,
+    };
+  }
+
+  // --------------------------------------------------
+  // SORTING
+  // --------------------------------------------------
+
   if (query.sort) {
-    const { field, direction } = query.sort;
+    const {
+      field,
+      direction,
+    } = query.sort;
 
-    records.sort((a, b) => {
-      if (a[field] < b[field]) {
-        return direction === "asc" ? -1 : 1;
-      }
+    records.sort((first, second) => {
+      const comparison =
+        compareValues(
+          first[field],
+          second[field]
+        );
 
-      if (a[field] > b[field]) {
-        return direction === "asc" ? 1 : -1;
-      }
-
-      return 0;
+      return direction === "asc"
+        ? comparison
+        : -comparison;
     });
   }
 
-  // -----------------------------
-  // 5. LIMIT
-  // -----------------------------
-  return records.slice(0, query.limit);
+  // --------------------------------------------------
+  // RAW RECORD RESULTS
+  // --------------------------------------------------
+
+  return {
+    value: records.slice(
+      0,
+      query.limit
+    ),
+    sources,
+  };
 }
 
+// --------------------------------------------------
+// GROUNDED SOURCE CREATION
+// --------------------------------------------------
+
+function createSources(
+  entity: QueryIR["entity"],
+  records: RecordValue[],
+  query: QueryIR
+): Source[] {
+  const fields =
+    new Set<string>();
+
+  for (const filter of query.filters) {
+    fields.add(filter.field);
+  }
+
+  if (query.aggregation) {
+    fields.add(
+      query.aggregation.field
+    );
+  }
+
+  for (const field of query.groupBy) {
+    fields.add(field);
+  }
+
+  let idField = "";
+
+  switch (entity) {
+    case "jobs":
+      idField = "jobId";
+      break;
+
+    case "hires":
+      idField = "hireId";
+      break;
+
+    case "headcount":
+      idField = "department";
+      break;
+
+    default:
+      idField = "";
+  }
+
+  if (idField) {
+    fields.add(idField);
+  }
+
+  return records.map((record) => ({
+    dataset: `${entity}.json`,
+    recordId: String(
+      record[idField]
+    ),
+    fields: Array.from(fields),
+  }));
+}
+
+// --------------------------------------------------
+// DETERMINISTIC AGGREGATION
+// --------------------------------------------------
+
 function aggregate(
-  records: any[],
-  functionName: QueryIR["aggregation"]["function"],
+  records: RecordValue[],
+  functionName:
+    QueryIR["aggregation"]["function"],
   field: string
 ): number | null {
   if (records.length === 0) {
@@ -128,39 +331,120 @@ function aggregate(
 
   const values = records
     .map((record) => record[field])
-    .filter((value) => value !== null && value !== undefined);
+    .filter(
+      (value) =>
+        value !== null &&
+        value !== undefined
+    );
 
   switch (functionName) {
     case "count":
       return records.length;
 
-    case "sum":
-      return values.reduce(
-        (total, value) => total + Number(value),
+    case "sum": {
+      const numericValues =
+        values.map(Number);
+
+      return numericValues.reduce(
+        (
+          total: number,
+          value: number
+        ) => total + value,
         0
       );
+    }
 
-    case "avg":
-      if (values.length === 0) return null;
+    case "avg": {
+      if (values.length === 0) {
+        return null;
+      }
+
+      const numericValues =
+        values.map(Number);
 
       return (
-        values.reduce(
-          (total, value) => total + Number(value),
+        numericValues.reduce(
+          (
+            total: number,
+            value: number
+          ) => total + value,
           0
-        ) / values.length
+        ) /
+        numericValues.length
       );
+    }
 
-    case "min":
-      if (values.length === 0) return null;
+    case "min": {
+      if (values.length === 0) {
+        return null;
+      }
 
-      return Math.min(...values.map(Number));
+      const numericValues =
+        values.map(Number);
 
-    case "max":
-      if (values.length === 0) return null;
+      return Math.min(
+        ...numericValues
+      );
+    }
 
-      return Math.max(...values.map(Number));
+    case "max": {
+      if (values.length === 0) {
+        return null;
+      }
+
+      const numericValues =
+        values.map(Number);
+
+      return Math.max(
+        ...numericValues
+      );
+    }
 
     default:
       return null;
   }
+}
+
+// --------------------------------------------------
+// SAFE VALUE COMPARISON
+// --------------------------------------------------
+
+function compareValues(
+  first: unknown,
+  second: unknown
+): number {
+  if (
+    typeof first === "number" &&
+    typeof second === "number"
+  ) {
+    return first - second;
+  }
+
+  if (
+    typeof first === "string" &&
+    typeof second === "string"
+  ) {
+    return first.localeCompare(
+      second
+    );
+  }
+
+  const firstNumber =
+    Number(first);
+
+  const secondNumber =
+    Number(second);
+
+  if (
+    !Number.isNaN(firstNumber) &&
+    !Number.isNaN(secondNumber)
+  ) {
+    return (
+      firstNumber - secondNumber
+    );
+  }
+
+  return String(first).localeCompare(
+    String(second)
+  );
 }

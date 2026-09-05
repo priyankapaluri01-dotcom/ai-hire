@@ -1,0 +1,187 @@
+[
+  {
+    "id": "eval-01",
+    "question": "How many open jobs?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "count"
+    }
+  },
+  {
+    "id": "eval-02",
+    "question": "How many hires are in Engineering?",
+    "expected": {
+      "type": "query",
+      "entity": "hires",
+      "aggregation": "count",
+      "department": "Engineering"
+    }
+  },
+  {
+    "id": "eval-03",
+    "question": "Show me hires by department.",
+    "expected": {
+      "type": "query",
+      "entity": "hires",
+      "aggregation": "count",
+      "groupBy": ["department"]
+    }
+  },
+  {
+    "id": "eval-04",
+    "question": "What is the average time-to-fill for Engineering?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "avg",
+      "department": "Engineering"
+    }
+  },
+  {
+    "id": "eval-05",
+    "question": "What is the average time-to-fill for Product?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "avg",
+      "department": "Product"
+    }
+  },
+  {
+    "id": "eval-06",
+    "question": "What is the minimum time-to-fill?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "min"
+    }
+  },
+  {
+    "id": "eval-07",
+    "question": "What is the maximum time-to-fill?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "max"
+    }
+  },
+  {
+    "id": "eval-08",
+    "question": "What is the total headcount?",
+    "expected": {
+      "type": "query",
+      "entity": "headcount",
+      "aggregation": "sum"
+    }
+  },
+  {
+    "id": "eval-09",
+    "question": "Show headcount by department.",
+    "expected": {
+      "type": "query",
+      "entity": "headcount",
+      "aggregation": "sum",
+      "groupBy": ["department"]
+    }
+  },
+  {
+    "id": "eval-10",
+    "question": "How many jobs are in Engineering?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "count",
+      "department": "Engineering"
+    }
+  },
+  {
+    "id": "eval-11",
+    "question": "How many Sales hires are there?",
+    "expected": {
+      "type": "query",
+      "entity": "hires",
+      "aggregation": "count",
+      "department": "Sales"
+    }
+  },
+  {
+    "id": "eval-12",
+    "question": "How many Marketing hires are there?",
+    "expected": {
+      "type": "query",
+      "entity": "hires",
+      "aggregation": "count",
+      "department": "Marketing"
+    }
+  },
+  {
+    "id": "eval-13",
+    "question": "Which department has the most hires?",
+    "expected": {
+      "type": "query",
+      "entity": "hires",
+      "aggregation": "count",
+      "groupBy": ["department"]
+    }
+  },
+  {
+    "id": "eval-14",
+    "question": "What is the weather today?",
+    "expected": {
+      "type": "refusal"
+    }
+  },
+  {
+    "id": "eval-15",
+    "question": "What is the company's revenue?",
+    "expected": {
+      "type": "refusal"
+    }
+  },
+  {
+    "id": "eval-16",
+    "question": "Show me employee salaries.",
+    "expected": {
+      "type": "refusal"
+    }
+  },
+  {
+    "id": "eval-17",
+    "question": "How many headcount are in Engineering?",
+    "expected": {
+      "type": "query",
+      "entity": "headcount",
+      "aggregation": "sum",
+      "department": "Engineering"
+    }
+  },
+  {
+    "id": "eval-18",
+    "question": "How many hires are in Product?",
+    "expected": {
+      "type": "query",
+      "entity": "hires",
+      "aggregation": "count",
+      "department": "Product"
+    }
+  },
+  {
+    "id": "eval-19",
+    "question": "How many open jobs are in Engineering?",
+    "expected": {
+      "type": "query",
+      "entity": "jobs",
+      "aggregation": "count",
+      "department": "Engineering",
+      "status": "OPEN"
+    }
+  },
+  {
+    "id": "eval-20",
+    "question": "Tell me about the company stock price.",
+    "expected": {
+      "type": "refusal"
+    }
+  }
+]
